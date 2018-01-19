@@ -1,6 +1,6 @@
 {
     "name": "westery/baidubce",
-    "description": "laravel GeoHash Library",
+    "description": "Baidu Bce Api Signer",
     "type": "library",
     "license": "MIT",
     "authors": [
