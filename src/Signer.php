@@ -22,16 +22,16 @@ class Signer
     //    2.content-length
     //    3.content-type
     //    4.content-md5
-    public static $defaultHeadersToSign;
+    public  $defaultHeadersToSign = [
+        "host",
+        "content-length",
+        "content-type",
+        "content-md5",
+    ];
 
-    public static function  __init()
+    public function __construct()
     {
-        Signer::$defaultHeadersToSign = array(
-            "host",
-            "content-length",
-            "content-type",
-            "content-md5",
-        );
+        HttpUtil::__init();
     }
 
     //签名函数
@@ -70,9 +70,11 @@ class Signer
 
         //使用sk和authString生成signKey
         $signingKey = hash_hmac('sha256', $authString, $secretAccessKey);
-
+//echo 'signKey'.$signingKey.'<br/>';
+//echo 'path'.$path.'<br/>';
         //生成标准化URI
         $canonicalURI = HttpUtil::getCanonicalURIPath($path);
+//        echo 'canonicalURI'.$canonicalURI.'<BR/>';
 
         //生成标准化QueryString
         $canonicalQueryString = HttpUtil::getCanonicalQueryString($params);
@@ -83,9 +85,14 @@ class Signer
             $headersToSign = $options[SignOption::HEADERS_TO_SIGN];
         }
 
+        $headersToSign = $this->getHeadersToSign($headers,$headersToSign);
+//        echo 'signKey:';
+//        print_r($headersToSign);
+//        echo '<br/>';
+
         //生成标准化header
         $canonicalHeader = HttpUtil::getCanonicalHeaders(
-            Signer::getHeadersToSign($headers, $headersToSign)
+            $headersToSign
         );
 
         //整理headersToSign，以';'号连接
@@ -99,6 +106,7 @@ class Signer
         //组成标准请求串
         $canonicalRequest = "$httpMethod\n$canonicalURI\n"
             . "$canonicalQueryString\n$canonicalHeader";
+//        echo 'CanoRequest:'.$canonicalRequest;
 
         //使用signKey和标准请求串完成签名
         $signature = hash_hmac('sha256', $canonicalRequest, $signingKey);
@@ -110,7 +118,7 @@ class Signer
     }
 
     //根据headsToSign过滤应该参与签名的header
-    public static function getHeadersToSign($headers, $headersToSign)
+    public  function getHeadersToSign($headers, $headersToSign)
     {
         //value被trim后为空串的header不参与签名
         $filter_empty = function($v) {
@@ -145,7 +153,7 @@ class Signer
         } else {
             //如果没有headersToSign，则根据默认规则来选取headers
             $filter_by_default = function($k) {
-                return Signer::isDefaultHeaderToSign($k);
+                return $this->isDefaultHeaderToSign($k);
             };
             $filtered_keys = array_filter($header_keys, $filter_by_default);
         }
@@ -157,10 +165,10 @@ class Signer
     //检查header是不是默认参加签名的：
     //1.是host、content-type、content-md5、content-length之一
     //2.以x-bce开头
-    public static function isDefaultHeaderToSign($header)
+    public  function isDefaultHeaderToSign($header)
     {
         $header = strtolower(trim($header));
-        if (in_array($header, Signer::$defaultHeadersToSign)) {
+        if (in_array($header, $this->defaultHeadersToSign)) {
             return true;
         }
         return substr_compare($header, Signer::BCE_PREFIX, 0, strlen(Signer::BCE_PREFIX)) == 0;

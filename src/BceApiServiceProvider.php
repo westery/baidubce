@@ -20,7 +20,7 @@ class BceApiServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__.'/config/wechatapp.php' => config_path('wechatapp.php'),
+            __DIR__.'/config/baidubce.php' => config_path('baidubce.php'),
         ]);
     }
 
