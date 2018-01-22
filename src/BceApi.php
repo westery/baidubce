@@ -14,29 +14,29 @@ class BceApi
 {
 
 
-    public function request($method,$path,$params)
+    public function request($method,$path,$query=[],$params=[])
     {
 
        $headers = [
-           "host" => config('baidubce.host'),
-           "content-type" => 'application/json'
-//           'content-type'=>'application/json; charset=utf-8',
-//        'content-length'=> 0,
-//        'User-Agent'=> 'This is the user-agent'
+           "Host" => config('baidubce.host'),
+           "Content-Type" => 'application/json'
        ];
-//       echo $method;
-//       echo $path;
-//       print_r($headers);
-//       print_r($params);exit;
-       $sign = $this->sign($method,$path,$headers,$params);
+       $sign = $this->sign($method,$path,$headers,$query);
        $headers['Authorization'] = $sign;
-       print_r($headers);
-       //exit;
-//       $client = new Client();
-//       $full_url = config('baidubce.host').$path;
-//
-//       $res = $client->request($method,$full_url,['headers'=>$headers]);
-//       return $res;
+       $client = new Client();
+       $full_url = config('baidubce.host').$path;
+       $options = [];
+       $options['headers'] = $headers;
+       if(!empty($query)){
+           $options['query'] = $query;
+       }
+
+       if(!empty($params)){
+           $options['json'] = $params;
+       }
+
+       $res = $client->request($method,$full_url,$options);
+       return $res;
 
 
     }
